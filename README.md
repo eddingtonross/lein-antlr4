@@ -1,23 +1,23 @@
 lein-antlr
 ==========
 
-**lein-antlr** is a [Leiningen 2](https://github.com/technomancy/leiningen) plugin for generating source
-code from one or more [ANTLR](http://www.antlr.org) grammars in a Leiningen project. It has roughly
+**lein-antlr4** is a [Leiningen 2](https://github.com/technomancy/leiningen) plugin for generating source
+code from one or more [ANTLR4](http://www.antlr.org) grammars in a Leiningen project. It is derived from the [lein-antlr](https://github.com/alexhall/lein-antlr) for version 3 of ANTLR.
+
+It has roughly
 the same functionality as the Maven ANTLR plugin, and is intended to allow developers to integrate
 ANTLR-generated source code into a Clojure project without resorting to Maven or some other manual process.
 
 To use <tt>lein-antlr</tt> in your project, simply add it to <tt>:plugins</tt> in your <tt>project.clj</tt>:
 
-    :plugins [[lein-antlr "0.2.0"]]
+    :plugins [[lein-antlr4 "0.1.0"]]
 	
-Leiningen 1.x users can use the old 0.1.0 version of <tt>lein-antlr</tt>.
-
 Usage
 -----
 
 The lein-antlr plugin can be called from the command-line as follows:
 
-    % lein antlr
+    % lein antlr4
 
 The plugin is configured in your <tt>project.clj</tt> as follows:
 
@@ -30,7 +30,7 @@ The plugin is configured in your <tt>project.clj</tt> as follows:
     )
 
 The plugin will scan the source directory specified by <tt>:antlr-src-dir</tt> and its subdirectories for all
-ANTLR grammar files (i.e. those files whose names end in '.g') and compile them, placing the generated
+ANTLR grammar files (i.e. those files whose names end in '.g4' or '.g') and compile them, placing the generated
 source code into the destination directory specified by <tt>:antlr-dest-dir</tt>. Grammar files located in
 subdirectories of the source directory will have their generated code placed into corresponding subdirectories
 in the destination directory.
@@ -51,41 +51,10 @@ description. This entry should be a map of keyword-value pairs as follows:
   <th>Description</th>
  </tr>
  <tr>
-  <td><tt>:debug</tt></td>
+  <td><tt>:atn</tt></td>
   <td>boolean</td>
   <td>false</td>
-  <td>Generate code in debug mode (i.e. starts up and waits for a debug connection on a TCP port).
-Useful for interacting with ANTLRWorks; be sure to disable for production code.</td>
- </tr>
- <tr>
-  <td><tt>:trace</tt></td>
-  <td>boolean</td>
-  <td>false</td>
-  <td>Generate code that will log rule entry and exit points to stdout when executed.</td>
- </tr>
- <tr>
-  <td><tt>:profile</tt></td>
-  <td>boolean</td>
-  <td>false</td>
-  <td>Generate code that will collect and report profiling information when executed.</td>
- </tr>
- <tr>
-  <td><tt>:report</tt></td>
-  <td>boolean</td>
-  <td>false</td>
-  <td>Report information about the grammars as they are processed.</td>
- </tr>
- <tr>
-  <td><tt>:verbose</tt></td>
-  <td>boolean</td>
-  <td>true</td>
-  <td>Put the ANTLR tool into verbose mode; will not affect the generated code.</td>
- </tr>
- <tr>
-  <td><tt>:print-grammar</tt></td>
-  <td>boolean</td>
-  <td>false</td>
-  <td>Print a version of the grammar with actions removed as it is processed.</td>
+  <td> Generate rule augmented transition network diagrams.</td>
  </tr>
  <tr>
   <td><tt>:message-format</tt></td>
@@ -95,22 +64,70 @@ Useful for interacting with ANTLRWorks; be sure to disable for production code.<
 Should be one of "antlr", "gnu", or "vs2005".</td>
  </tr>
  <tr>
-  <td><tt>:max-switch-case-labels</tt></td>
-  <td>integer</td>
-  <td>300</td>
-  <td>The maximum number of rule alternatives that ANTLR will condense into a case statement.</td>
+  <td><tt>:listener</tt></td>
+  <td>boolean</td>
+  <td>true</td>
+  <td> Whether to generate a parse tree listener.</td>
  </tr>
  <tr>
-  <td><tt>:dfa</tt></td>
+  <td><tt>:visitor</tt></td>
   <td>boolean</td>
   <td>false</td>
-  <td>Generate a description of the DFA for each decision in the grammar as it is processed.</td>
+  <td> Whether to generate a parse tree visitor.</td>
  </tr>
  <tr>
-  <td><tt>:nfa</tt></td>
+  <td><tt>:package</tt></td>
+  <td>String</td>
+  <td>false</td>
+  <td>Specify a package/namespace for the generated code.</td>
+ </tr>
+ <tr>
+  <td><tt>:encoding</tt></td>
+  <td>String</td>
+  <td>"UTF-8"</td>
+  <td>Specify the encoding of the grammar files</td>
+ </tr>
+ <tr>
+  <td><tt>:depend</tt></td>
   <td>boolean</td>
   <td>false</td>
-  <td>Print a description of the NFA for each rule as it is analyzed.</td>
+  <td>Generate file dependencies.</td>
+ </tr>
+ <tr>
+  <td><tt>:D</tt></td>
+  <td>map</td>
+  <td>{}</td>
+  <td>Set/override grammar-level options to values specified by the map.</td>
+ </tr>
+ <tr>
+  <td><tt>:warn-error</tt></td>
+  <td>boolean</td>
+  <td>false</td>
+  <td>Treat warnings as errors.</td>
+ </tr>
+ <tr>
+  <td><tt>:save-lexer</tt></td>
+  <td>boolean</td>
+  <td>false</td>
+  <td>Save temporary lexer file created for combined grammars.</td>
+ </tr>
+ <tr>
+  <td><tt>:debug-string-template</tt></td>
+  <td>boolean</td>
+  <td>false</td>
+  <td>Launch StringTemplate visualizer on generated code.</td>
+ </tr>
+ <tr>
+  <td><tt>:force-atn</tt></td>
+  <td>boolean</td>
+  <td>false</td>
+  <td>Use the ATN simulator for all predictions.</td>
+ </tr>
+ <tr>
+  <td><tt>:log</tt></td>
+  <td>boolean</td>
+  <td>false</td>
+  <td>Dump logging info to antlr-timestamp.log.</td>
  </tr>
 </table>
 
@@ -118,12 +135,12 @@ Cleaning Up
 -----------
 
 The plugin can be configured to clean the generated source directory as part of the Leiningen 'clean'
-task, but this must be manually set up by adding the <tt>leiningen.antlr</tt> namespace to the project
+task, but this must be manually set up by adding the <tt>leiningen.antlr4</tt> namespace to the project
 hooks, like so:
 
     (defproject my-project
       ...
-      :hooks [leiningen.antlr]
+      :hooks [leiningen.antlr4]
       ...
     )
 
@@ -132,6 +149,13 @@ hooks, like so:
 License & Copyright
 -------------------
 
+This is a derived work of the lein-antlr project.
+
 Copyright (c) 2010 Revelytix, Inc.
 
 The lein-antlr project is distrubuted under the [Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+
+There have been modifications to this project to form the lein-antlr4 project.
+
+All modifications are Copyright (c) 2013 Edward Ross
+and distributed under [Apache Software License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).

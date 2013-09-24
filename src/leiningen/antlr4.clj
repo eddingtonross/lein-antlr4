@@ -11,13 +11,17 @@
 ;;  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ;;  See the License for the specific language governing permissions and
 ;;  limitations under the License.
+;;
+;;  This is a derivative work, modified by Edward Ross.
+;;  The modifications are Copyright 2012 Edward Ross, and licensed
+;;  upder the Apache License, Version 2.0.
 
-(ns leiningen.antlr
+(ns leiningen.antlr4
   (:use [leiningen.clean :as clean :only (clean delete-file-recursively)]
         [robert.hooke :only (add-hook)])
   (:import [java.io File FileFilter]
            [java.net URI]
-           [org.antlr Tool]))
+           [org.antlr.v4 Tool]))
 
 (defn sub-dirs
   "Recursively find all subdirectories under the given root directory. Also returns the root directory."
@@ -66,69 +70,86 @@ and returns a seq of absolute File objects that represent those relative paths r
       (File. (.resolve parent-uri child-path)))))
 
 (def ^{:doc "Default options for the ANTLR tool."} default-antlr-opts
-  {:debug false
-   :trace false
-   :dfa false
-   :nfa false
+  {:atn false
    :message-format "antlr"
-   :verbose true
-   :max-switch-case-labels 300
-   :print-grammar false
-   :report false
-   :profile false})
+   :listener true
+   :visitor false
+   :encoding "UTF-8"
+   :package false
+   :depend false
+   :D {}
+   :warn-error false
+   :save-lexer false
+   :debug-string-template false
+   :force-atn false
+   :log false
+   :verbose-dfa false
+   })
 
-(def ^{:doc "Mapping of option names to symbols representing the corresponding setter methods on
-the org.antlr.Tool class."} opts-to-setter-map
-  {:debug 'setDebug
-   :trace 'setTrace
-   :dfa 'setGenerate_DFA_dot
-   :nfa 'setGenerate_NFA_dot
-   :message-format 'setMessageFormat
-   :verbose 'setVerbose
-   :max-switch-case-labels 'setMaxSwitchCaseLabels
-   :print-grammar 'setPrintGrammar
-   :report 'setReport
-   :profile 'setProfile})
+(defn option-text [text]
+  (fn [x] (if x (str " -" text ) "")))
+
+(defn binary-option [text]
+  (fn [x] (str " -" (if x "" "no-") text)))
+
+
+(def ^{:doc "Mapping of option names to functions mapping the value of the option 
+            to a corresponding command line string"} opts-to-command
+  {
+   :atn (option-text "atn")
+   :message-format #(str " -message-format " %)
+   :listener (binary-option "listener")
+   :visitor (binary-option "visitor")
+   :encoding #(str " -encoding " %)
+   :package (option-text "package")
+   :depend (option-text "depend")
+   :D #(apply str
+              (for [[option value] %]
+                (str " -D" option "=" value)))
+   :warn-error (option-text "Werror")
+   :save-lexer (option-text "Xsave-lexer")
+   :debug-string-template (option-text "XdbgST")
+   :force-atn (option-text "Xforce-atn")
+   :log (option-text "Xlog")
+   :verbose-dfa (option-text "Xverbose-dfa")
+   })
+
+(defn output-command [output-dir]
+  (str "-o " output-dir " "))
+
+(defn input-command [input-dir]
+  (str "-lib " input-dir " "))
+
+(defn options-command [options]
+  (apply str
+         (for [[option value] options]
+           ((opts-to-command option) value))))
+
+(defn files-command [files]
+  (apply str (for [file files] (str " " file))))
 
 (def ^{:doc "The collection of file extensions that ANTLR accepts (hard-coded in the ANTLR tool)."}
-      file-types #{"g" "g3"})
+      file-types #{"g" "g4"})
 
-(defmacro make-antlr-tool [antlr-opts]
-  "Creates the ANTLR tool and initializes it with the configuration settings in antlr-opts."
-  (let [tool-sym (gensym "tool-")
-        opts-sym (gensym "opts-")]
-    `(let [~tool-sym (Tool.)
-           ~opts-sym (merge default-antlr-opts ~antlr-opts)]
-       ~@(for [antlr-opt (keys opts-to-setter-map)]
-          (let [setter-sym (opts-to-setter-map antlr-opt)]
-            `(. ~tool-sym ~setter-sym (~opts-sym ~antlr-opt))))
-       ~tool-sym)))
-
-(defn prepare-tool
-  "Prepares the ANTLR tool with the given input directory, output directory, and source grammar files."
-  [^Tool tool ^File input-dir ^File output-dir grammar-files]
-  (doto tool
-    (.setOutputDirectory (.getAbsolutePath output-dir))
-    (.setForceAllFilesToOutputDir true)
-    (.setInputDirectory (.getAbsolutePath input-dir)))
-  (when (not (empty? grammar-files))
-    (.setMake tool true)
-    (doseq [grammar-file grammar-files]
-      (.addGrammarFile tool (.getName grammar-file)))))
+(process-antlr-dir (File. ".") (File. ".") default-antlr-opts)
 
 (defn process-antlr-dir
   "Processes ANTLR grammar files in the given intput directory to generate output in the given output directory
 with the given configuration options."
   [^File input-dir ^File output-dir antlr-opts]
-  (let [grammar-files (files-of-type input-dir file-types)
-        antlr-tool (make-antlr-tool antlr-opts)]
-    ;; The ANTLR tool uses static state to track errors -- reset before each run.
-    (org.antlr.tool.ErrorManager/resetErrorState)
-    (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
-    (prepare-tool antlr-tool input-dir output-dir grammar-files)
-    (.process antlr-tool)
-    (if (> (.getNumErrors antlr-tool) 0)
-      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors antlr-tool) " grammar errors."))))))
+  (if-let [grammar-files (files-of-type input-dir file-types)]
+    (do
+      (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
+;    ;; The ANTLR tool uses static state to track errors -- reset before each run.
+;    (org.antlr.v4.tool.ErrorManager/resetErrorState)
+    (let
+      [input-string (input-command input-dir)
+       output-string (output-command output-dir)
+       options-string (options-command antlr-opts)
+       files (files-command grammar-files)]
+      (Tool. (str output-string input-string options-string files))))))
+;    (if (> (.getNumErrors antlr-tool) 0)
+;      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors antlr-tool) " grammar errors."))))))
 
 (defn compile-antlr
   "Recursively process all subdirectories within the given top-level source directory that contain ANTLR
