@@ -131,23 +131,27 @@ and returns a seq of absolute File objects that represent those relative paths r
 (def ^{:doc "The collection of file extensions that ANTLR accepts (hard-coded in the ANTLR tool)."}
       file-types #{"g" "g4"})
 
+
 (defn process-antlr-dir
   "Processes ANTLR grammar files in the given intput directory to generate output in the given output directory
 with the given configuration options."
   [^File input-dir ^File output-dir antlr-opts]
-  (if-let [grammar-files (files-of-type input-dir file-types)]
-    (do
-      (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
-;    ;; The ANTLR tool uses static state to track errors -- reset before each run.
-;    (org.antlr.v4.tool.ErrorManager/resetErrorState)
-    (let
-      [input-string (input-command input-dir)
-       output-string (output-command output-dir)
-       options-string (options-command antlr-opts)
-       files (files-command grammar-files)]
-      (Tool. (str output-string input-string options-string files))))))
-;    (if (> (.getNumErrors antlr-tool) 0)
-;      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors antlr-tool) " grammar errors."))))))
+  (let [grammar-files (files-of-type input-dir file-types)
+        input-string (input-command input-dir)
+        output-string (output-command output-dir)
+        options-string (options-command antlr-opts)
+        files (files-command grammar-files)
+        command-string (str output-string input-string options-string files)
+        command-array (into-array (clojure.string/split command-string #" +"))
+        antlr-tool (Tool. command-array)
+        errMgr (.errMgr antlr-tool)]
+    (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
+    ;; The ANTLR tool uses static state to track errors -- reset before each run.
+    (.resetErrorState errMgr)
+    (try
+      (.processGrammarsOnCommandLine antlr-tool))
+    (if (> (.getNumErrors antlr-tool) 0)
+      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors antlr-tool) " grammar errors."))))))
 
 (defn compile-antlr
   "Recursively process all subdirectories within the given top-level source directory that contain ANTLR
