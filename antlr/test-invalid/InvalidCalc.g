@@ -4,27 +4,10 @@
 
 grammar InvalidCalc;
 
-tokens {
-  PLUS  = '+' ;
-  MINUS = '-' ;
-  MULT  = '*' ;
-  DIV = '/' ;
-}
-
-@members {
-    public static void main(String[] args) throws Exception {
-        SimpleCalcLexer lex = new SimpleCalcLexer(new ANTLRFileStream(args[0]));
-        CommonTokenStream tokens = new CommonTokenStream(lex);
-
-        SimpleCalcParser parser = new SimpleCalcParser(tokens);
-
-        try {
-            parser.expr();
-        } catch (RecognitionException e)  {
-            e.printStackTrace();
-        }
-    }
-}
+PLUS  = '+' ;
+MINUS = '-' ;
+MULT  = '*' ;
+DIV = '/' ;
 
 /*------------------------------------------------------------------
  * PARSER RULES

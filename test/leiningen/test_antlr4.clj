@@ -11,9 +11,14 @@
 ;;  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 ;;  See the License for the specific language governing permissions and
 ;;  limitations under the License.
+;;
+;;  This is a derivative work, modified by Edward Ross.
+;;  The modifications are Copyright 2012 Edward Ross, and licensed
+;;  upder the Apache License, Version 2.0.
 
-(ns leiningen.test-antlr
-  (:use [leiningen.antlr :only (antlr)]
+
+(ns leiningen.test-antlr4
+  (:use [leiningen.antlr4 :only (antlr)]
         [leiningen.clean :only (delete-file-recursively)]
         [clojure.test])
   (:import [java.io File]))

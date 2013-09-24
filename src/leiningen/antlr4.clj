@@ -131,8 +131,6 @@ and returns a seq of absolute File objects that represent those relative paths r
 (def ^{:doc "The collection of file extensions that ANTLR accepts (hard-coded in the ANTLR tool)."}
       file-types #{"g" "g4"})
 
-(process-antlr-dir (File. ".") (File. ".") default-antlr-opts)
-
 (defn process-antlr-dir
   "Processes ANTLR grammar files in the given intput directory to generate output in the given output directory
 with the given configuration options."
