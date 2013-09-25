@@ -18,7 +18,7 @@
 
 
 (ns leiningen.test-antlr4
-  (:use [leiningen.antlr4 :only (antlr)]
+  (:use [leiningen.antlr4 :only (antlr4)]
         [leiningen.clean :only (delete-file-recursively)]
         [clojure.test])
   (:import [java.io File]))
@@ -36,7 +36,7 @@
 (defn out-file-exists [f] (.exists (out-file f)))
 
 (deftest test-antlr-compile
-  (let [result (with-out-str (antlr (antlr-project "test")))]
+  (let [result (with-out-str (antlr4 (antlr-project "test")))]
     (is (true? (.startsWith result "Compiling ANTLR grammars"))))
   (are [x] (true? (out-file-exists x))
     "test/antlr/test/SimpleCalc.tokens"
@@ -47,15 +47,15 @@
     "test/paren/antlr/test/paren/ParenCalcParser.java")
   (let [timestamp (.lastModified (out-file "test/SimpleCalcLexer.java"))]
     (Thread/sleep 2000)
-    (antlr (antlr-project "test"))
+    (antlr4 (antlr-project "test"))
     (is (= timestamp (.lastModified (out-file "test/SimpleCalcLexer.java"))))))
 
 (deftest test-antlr-invalid
-  (is (thrown? RuntimeException (antlr (antlr-project "test-invalid"))))
+  (is (thrown? RuntimeException (antlr4 (antlr-project "test-invalid"))))
   (is (false? (out-file-exists "test-invalid/antlr/test-invalid/InvalidCalcLexer.java"))))
 
 (deftest test-suffix
-  (antlr (antlr-project "test-suffix"))
+  (antlr4 (antlr-project "test-suffix"))
   (are [x] (true? (out-file-exists x))
     "test-suffix/antlr/test-suffix/SimpleCalc.tokens"
     "test-suffix/antlr/test-suffix/SimpleCalcLexer.java"

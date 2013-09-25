@@ -187,7 +187,7 @@ grammar files to generate output in a corresponding subdirectory of the destinat
 (defn antlr-options "Determine the ANTLR config options for the project."
   [project] (get project :antlr-options))
 
-(defn antlr
+(defn antlr4
   "Generate Java source from an ANTLR grammar.
 
 A typical project configuration will look like:
@@ -200,7 +200,7 @@ A typical project configuration will look like:
   ...
 )
 
-See https://github.com/alexhall/lein-antlr for a full listing of configuration options."
+See https://github.com/eddingtonross/lein-antlr4 for a full listing of configuration options."
   [project]
   (compile-antlr (antlr-src-dir project)
                  (antlr-dest-dir project)
