@@ -87,25 +87,30 @@ and returns a seq of absolute File objects that represent those relative paths r
    })
 
 (defn option-text [text]
-  (fn [x] (if x (str " -" text ) "")))
+  (fn [x] (if x [(str "-" text)] [])))
 
 (defn binary-option [text]
-  (fn [x] (str " -" (if x "" "no-") text)))
+  (fn [x] [(str "-" (if x "" "no-") text)]))
 
+(defn argument-option [text]
+    (fn [x] (if x [(str "-" text) x] [])))
+
+
+(for [[option value] {"language" "java" "header" "none"}]
+      (str "-D" option "=" value))
 
 (def ^{:doc "Mapping of option names to functions mapping the value of the option 
             to a corresponding command line string"} opts-to-command
   {
    :atn (option-text "atn")
-   :message-format #(str " -message-format " %)
+   :message-format (argument-option "message-format")
    :listener (binary-option "listener")
    :visitor (binary-option "visitor")
-   :encoding #(str " -encoding " %)
+   :encoding (argument-option "encoding")
    :package (option-text "package")
    :depend (option-text "depend")
-   :D #(apply str
-              (for [[option value] %]
-                (str " -D" option "=" value)))
+   :D #(for [[option value] %]
+         (str "-D" option "=" value))
    :warn-error (option-text "Werror")
    :save-lexer (option-text "Xsave-lexer")
    :debug-string-template (option-text "XdbgST")
@@ -115,22 +120,20 @@ and returns a seq of absolute File objects that represent those relative paths r
    })
 
 (defn output-command [output-dir]
-  (str "-o " output-dir " "))
+  (list "-o" (str output-dir)))
 
 (defn input-command [input-dir]
-  (str "-lib " input-dir " "))
+  (list "-lib" (str input-dir)))
 
 (defn options-command [options]
-  (apply str
-         (for [[option value] options]
-           ((opts-to-command option) value))))
+  (filter identity
+          (apply concat
+                 (for [[option value] options]
+                   ((opts-to-command option) value)))))
 
-(defn files-command [files]
-  (apply str (for [file files] (str " " file))))
 
 (def ^{:doc "The collection of file extensions that ANTLR accepts (hard-coded in the ANTLR tool)."}
       file-types #{"g" "g4"})
-
 
 (def antlr (Tool. (into-array ["test.g4"])))
 
@@ -157,12 +160,11 @@ and returns a seq of absolute File objects that represent those relative paths r
 with the given configuration options."
   [^File input-dir ^File output-dir antlr-opts]
   (let [grammar-files (files-of-type input-dir file-types)
-        input-string (input-command input-dir)
-        output-string (output-command output-dir)
-        options-string (options-command antlr-opts)
-        files (files-command grammar-files)
-        command-string (str output-string input-string options-string files)
-        command-array (into-array (clojure.string/split command-string #" +"))]
+        command-array (into-array
+                        (concat (input-command input-dir)
+                                (output-command output-dir)
+                                (options-command antlr-opts)
+                                (map str grammar-files)))]
     (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
     ;; The ANTLR tool uses static state to track errors -- reset before each run.
     (antlr-main command-array)))
