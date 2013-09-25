@@ -39,12 +39,12 @@
   (let [result (with-out-str (antlr (antlr-project "test")))]
     (is (true? (.startsWith result "Compiling ANTLR grammars"))))
   (are [x] (true? (out-file-exists x))
-    "test/SimpleCalc.tokens"
-    "test/SimpleCalcLexer.java"
-    "test/SimpleCalcParser.java"
-    "test/paren/ParenCalc.tokens"
-    "test/paren/ParenCalcLexer.java"
-    "test/paren/ParenCalcParser.java")
+    "test/antlr/test/SimpleCalc.tokens"
+    "test/antlr/test/SimpleCalcLexer.java"
+    "test/antlr/test/SimpleCalcParser.java"
+    "test/paren/antlr/test/paren/ParenCalc.tokens"
+    "test/paren/antlr/test/paren/ParenCalcLexer.java"
+    "test/paren/antlr/test/paren/ParenCalcParser.java")
   (let [timestamp (.lastModified (out-file "test/SimpleCalcLexer.java"))]
     (Thread/sleep 2000)
     (antlr (antlr-project "test"))
@@ -52,11 +52,11 @@
 
 (deftest test-antlr-invalid
   (is (thrown? RuntimeException (antlr (antlr-project "test-invalid"))))
-  (is (false? (out-file-exists "test-invalid/InvalidCalcLexer.java"))))
+  (is (false? (out-file-exists "test-invalid/antlr/test-invalid/InvalidCalcLexer.java"))))
 
 (deftest test-suffix
   (antlr (antlr-project "test-suffix"))
   (are [x] (true? (out-file-exists x))
-    "test-suffix/SimpleCalc.tokens"
-    "test-suffix/SimpleCalcLexer.java"
-    "test-suffix/SimpleCalcParser.java"))
+    "test-suffix/antlr/test-suffix/SimpleCalc.tokens"
+    "test-suffix/antlr/test-suffix/SimpleCalcLexer.java"
+    "test-suffix/antlr/test-suffix/SimpleCalcParser.java"))

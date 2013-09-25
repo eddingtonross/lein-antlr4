@@ -135,9 +135,6 @@ and returns a seq of absolute File objects that represent those relative paths r
 (def ^{:doc "The collection of file extensions that ANTLR accepts (hard-coded in the ANTLR tool)."}
       file-types #{"g" "g4"})
 
-(def antlr (Tool. (into-array ["test.g4"])))
-
-
 (defn antlr-main [args]
   "Implements antlr tool almost as if invoked from the command line."
   (let [antlr (Tool. args)
