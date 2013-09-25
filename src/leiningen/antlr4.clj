@@ -132,6 +132,26 @@ and returns a seq of absolute File objects that represent those relative paths r
       file-types #{"g" "g4"})
 
 
+(def antlr (Tool. (into-array ["test.g4"])))
+
+
+(defn antlr-main [args]
+  "Implements antlr tool almost as if invoked from the command line."
+  (let [antlr (Tool. args)
+        err   (.errMgr antlr)
+        log   (.logMgr antlr)]
+    (try
+      (.processGrammarsOnCommandLine antlr)
+      (finally
+        (if (.log antlr)
+          (try
+            (println (str "wrote " (.save log)))
+            (catch java.io.IOException ioe
+             (. err toolError org.antlr.v4.tool.ErrorType/INTERNAL_ERROR ioe))))))
+
+    (if (> (.getNumErrors err) 0)
+      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors err) " grammar errors."))))))
+
 (defn process-antlr-dir
   "Processes ANTLR grammar files in the given intput directory to generate output in the given output directory
 with the given configuration options."
@@ -142,16 +162,10 @@ with the given configuration options."
         options-string (options-command antlr-opts)
         files (files-command grammar-files)
         command-string (str output-string input-string options-string files)
-        command-array (into-array (clojure.string/split command-string #" +"))
-        antlr-tool (Tool. command-array)
-        errMgr (.errMgr antlr-tool)]
+        command-array (into-array (clojure.string/split command-string #" +"))]
     (println "Compiling ANTLR grammars:" (apply str (interpose " " (map #(.getName %) grammar-files))) "...")
     ;; The ANTLR tool uses static state to track errors -- reset before each run.
-    (.resetErrorState errMgr)
-    (try
-      (.processGrammarsOnCommandLine antlr-tool))
-    (if (> (.getNumErrors antlr-tool) 0)
-      (throw (RuntimeException. (str "ANTLR detected " (.getNumErrors antlr-tool) " grammar errors."))))))
+    (antlr-main command-array)))
 
 (defn compile-antlr
   "Recursively process all subdirectories within the given top-level source directory that contain ANTLR
