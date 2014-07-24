@@ -10,7 +10,7 @@ ANTLR-generated source code into a Clojure project without resorting to Maven or
 
 To use <tt>lein-antlr</tt> in your project, simply add it to <tt>:plugins</tt> in your <tt>project.clj</tt>:
 
-    :plugins [[lein-antlr4 "0.1.0"]]
+    :plugins [[lein-antlr4 "0.1.0-SNAPSHOT"]]
 	
 Usage
 -----
