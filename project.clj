@@ -2,7 +2,7 @@
 ;;  The modifications are Copyright 2012 Edward Ross, and licensed
 ;;  upder the Apache License, Version 2.0.
 
-(defproject lein-antlr4 "0.1.1-SNAPSHOT"
+(defproject lein-antlr4 "0.1.1"
   :description "Generate source code from ANTLR4 grammars in Leiningen."
   :dependencies [[org.antlr/antlr4 "4.2.2"]]
   :profile {:dev {:dependencies [[org.clojure/clojure "1.4.0"]]}}
