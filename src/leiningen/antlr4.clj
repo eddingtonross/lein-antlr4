@@ -107,7 +107,7 @@ and returns a seq of absolute File objects that represent those relative paths r
    :listener (binary-option "listener")
    :visitor (binary-option "visitor")
    :encoding (argument-option "encoding")
-   :package (option-text "package")
+   :package (argument-option "package")
    :depend (option-text "depend")
    :D #(for [[option value] %]
          (str "-D" option "=" value))
