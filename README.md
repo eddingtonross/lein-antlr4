@@ -8,9 +8,11 @@ It has roughly
 the same functionality as the Maven ANTLR plugin, and is intended to allow developers to integrate
 ANTLR-generated source code into a Clojure project without resorting to Maven or some other manual process.
 
-To use <tt>lein-antlr</tt> in your project, simply add it to <tt>:plugins</tt> in your <tt>project.clj</tt>:
+To use <tt>lein-antlr4</tt> in your project, simply add it to <tt>:plugins</tt> in your <tt>project.clj</tt>:
 
     :plugins [[lein-antlr4 "0.1.0-SNAPSHOT"]]
+
+*Warning*: This is **incomplete**. For basic use cases it works, but it may not properly support many of the command line options of ANTLR tool and there is is currently no work being done to test or support other features. 
 	
 Usage
 -----
